@@ -1,0 +1,39 @@
+name: Build and Package Appx for Windows 10 Mobile (Unsigned)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.1
+
+    - name: Restore NuGet packages
+      run: nuget restore Samples/Nfc/Nfc.sln
+
+    - name: Build solution
+      run: msbuild Samples/Nfc/Nfc.sln /p:Configuration=Release /p:Platform=ARM /p:AppxPackageSigningEnabled=false
+
+    - name: Create Appx Package
+      run: |
+        $appxManifestPath = Get-ChildItem -Recurse -Filter Package.appxmanifest | Select-Object -First 1
+        if ($appxManifestPath) {
+          $projectDir = $appxManifestPath.Directory.FullName
+          $appxPackageDir = Join-Path -Path $env:GITHUB_WORKSPACE -ChildPath "AppxPackages"
+          New-Item -ItemType Directory -Path $appxPackageDir -Force | Out-Null
+          New-AppxPackage -PackagePath (Join-Path -Path $appxPackageDir -ChildPath "YourApp.appx") -DependencyPath $projectDir -ApplicationPackageManifest $appxManifestPath.FullName -Sign $false
+        }
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: appx-package
+        path: AppxPackages    

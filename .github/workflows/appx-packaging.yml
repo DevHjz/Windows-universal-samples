@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2019
 
     steps:
     - name: Checkout code
@@ -24,6 +24,7 @@ jobs:
 
     - name: Create Appx Package
       run: |
+        Import-Module Appx  # 加载 Appx 模块
         $appxManifestPath = Get-ChildItem -Recurse -Filter Package.appxmanifest | Select-Object -First 1
         if ($appxManifestPath) {
           $projectDir = $appxManifestPath.Directory.FullName
@@ -36,4 +37,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: appx-package
-        path: AppxPackages    
+        path: AppxPackages
